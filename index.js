@@ -40,6 +40,7 @@ async function run() {
     // All collections
     const database = client.db("MultiCreatify_DB");
     const usersCollection = await database.collection("Users");
+    const worksheetCollection = await database.collection("WorkSheet");
 
     // post a user info
     app.post("/users", async (req, res) => {
@@ -54,6 +55,18 @@ async function run() {
       const result = await usersCollection.insertOne(newUser);
       res.send(result);
     });
+
+    // post new work by post method
+    app.post("/work-sheet", async (req, res) => {
+      const newWork = req.body;
+      const result = await worksheetCollection.insertOne(newWork);
+      res.send(result);
+    });
+
+
+
+
+
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
