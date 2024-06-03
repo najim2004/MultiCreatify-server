@@ -41,6 +41,7 @@ async function run() {
     const database = client.db("MultiCreatify_DB");
     const usersCollection = await database.collection("Users");
     const worksheetCollection = await database.collection("WorkSheet");
+    const paymentsCollection = await database.collection("Payments");
 
     // post a user info
     app.post("/users", async (req, res) => {
@@ -63,10 +64,27 @@ async function run() {
       res.send(result);
     });
 
+    // get specific user works data
+    app.get("/work-sheet/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await worksheetCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .toArray();
+      res.send(result);
+    });
 
-
-
-
+    // get single user payment information
+    app.get("/salary-history/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await paymentsCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
