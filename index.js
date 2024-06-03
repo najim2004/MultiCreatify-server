@@ -56,6 +56,13 @@ async function run() {
       const result = await usersCollection.insertOne(newUser);
       res.send(result);
     });
+    // get users by role get method
+    app.get("/users/:role", async (req, res) => {
+      const role = req.params.role;
+      const query = { role: role };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
 
     // post new work by post method
     app.post("/work-sheet", async (req, res) => {
