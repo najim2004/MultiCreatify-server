@@ -57,10 +57,18 @@ async function run() {
       res.send(result);
     });
     // get users by role get method
-    app.get("/users/:role", async (req, res) => {
-      const role = req.params.role;
+    app.get("/users", async (req, res) => {
+      const role = req.query.role;
       const query = { role: role };
       const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // get user by id by get method
+    app.get("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.findOne(query);
       res.send(result);
     });
 
