@@ -56,10 +56,17 @@ async function run() {
       const result = await usersCollection.insertOne(newUser);
       res.send(result);
     });
-    // get users by role get method
+    // get all employee by get method
     app.get("/users", async (req, res) => {
       const role = req.query.role;
       const query = { role: role };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // get all employee & HR by get method
+    app.get("/users/admin", async (req, res) => {
+      const query = { rol: { $ne: "Admin" } };
       const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
@@ -76,6 +83,11 @@ async function run() {
     app.post("/work-sheet", async (req, res) => {
       const newWork = req.body;
       const result = await worksheetCollection.insertOne(newWork);
+      res.send(result);
+    });
+    // get all worksheets
+    app.get("/work-sheet", async (req, res) => {
+      const result = await worksheetCollection.find({}).toArray();
       res.send(result);
     });
 
