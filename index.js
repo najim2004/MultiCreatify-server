@@ -66,7 +66,10 @@ async function run() {
 
     // get all employee & HR by get method
     app.get("/users/admin", async (req, res) => {
-      const query = { rol: { $ne: "Admin" } };
+      const query = {
+        rol: { $ne: "Admin" },
+        verified: { $ne: false },
+      };
       const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
@@ -78,13 +81,20 @@ async function run() {
       const updateDoc = { $set: { ...newData } };
       const query = { _id: new ObjectId(id) };
       const result = await usersCollection.updateOne(query, updateDoc);
-      console.log(result);
       res.send(result);
     });
     // get user by id by get method
     app.get("/users/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
+    // get user by email by get method
+    app.get("/users/email/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
       const result = await usersCollection.findOne(query);
       res.send(result);
     });
@@ -97,7 +107,20 @@ async function run() {
     });
     // get all worksheets
     app.get("/work-sheet", async (req, res) => {
-      const result = await worksheetCollection.find({}).toArray();
+      const { employee, month } = req.query;
+      let query = {};
+
+      if (employee) {
+        query.name = employee;
+      }
+      if (month) {
+        const monthInt = parseInt(month, 10);
+        query.date = {
+          $gte: new Date(2024, monthInt, 1), // Change the year as needed
+          $lt: new Date(2024, monthInt + 1, 1), // Change the year as needed
+        };
+      }
+      const result = await worksheetCollection.find(query).toArray();
       res.send(result);
     });
 
