@@ -71,6 +71,16 @@ async function run() {
       res.send(result);
     });
 
+    // update the user info by patch method
+    app.patch("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const newData = req.body;
+      const updateDoc = { $set: { ...newData } };
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.updateOne(query, updateDoc);
+      console.log(result);
+      res.send(result);
+    });
     // get user by id by get method
     app.get("/users/:id", async (req, res) => {
       const id = req.params.id;
