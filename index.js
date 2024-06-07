@@ -13,7 +13,11 @@ const port = process.env.PORT || 5000;
 // ---------------------middleware--------------------
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://multi-creatify.web.app",
+    ],
     credentials: true,
   })
 );
@@ -26,15 +30,10 @@ const cookieOptions = {
   secure: process.env.NODE_ENV === "production" ? true : false,
 };
 
-// logger
-const logger = async (req, res, next) => {
-  console.log("called:", req.host, req.originalUrl);
-  next();
-};
-
 // verify token
 const verifyToken = (req, res, next) => {
   const token = req.cookies?.token;
+  console.log("39", token);
   if (!token) {
     return res.status(401).send({ message: "unauthorized access" });
   }
@@ -120,7 +119,7 @@ async function run() {
         .send({ success: true });
     });
     // post a user info
-    app.post("/users", logger, async (req, res) => {
+    app.post("/users", async (req, res) => {
       const newUser = req.body;
       const query = { email: newUser.email };
       const existingUser = await usersCollection.findOne(query);
@@ -133,33 +132,41 @@ async function run() {
       res.send(result);
     });
     // get all employee by get method (only HR)
-    app.get("/users", logger, verifyToken, verifyHR, async (req, res) => {
+    app.get("/users", verifyToken, verifyHR, async (req, res) => {
       const role = req.query.role;
-      const query = { role: role };
+      const query = { role: role, status: { $ne: "Fired" } };
       const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
+    // update use verified status (HR only)
+    app.patch(
+      "/users/hr/:id",
 
-    // get all employee & HR by get method (only admin)
-    app.get(
-      "/users/admin",
-      logger,
       verifyToken,
-      verifyAdmin,
+      verifyHR,
       async (req, res) => {
-        const query = {
-          role: { $ne: "Admin" },
-          verified: { $ne: false },
-        };
-        const result = await usersCollection.find(query).toArray();
+        const id = req.params.id;
+        const updateDoc = { $set: { verified: true } };
+        const query = { _id: new ObjectId(id) };
+        const result = await usersCollection.updateOne(query, updateDoc);
         res.send(result);
       }
     );
 
+    // get all employee & HR by get method (only admin)
+    app.get("/users/admin", verifyToken, verifyAdmin, async (req, res) => {
+      const query = {
+        role: { $ne: "Admin" },
+        verified: { $ne: false },
+      };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
     // update the user info by patch method (only admin)
     app.patch(
       "/users/:id",
-      logger,
+
       verifyToken,
       verifyAdmin,
       async (req, res) => {
@@ -172,7 +179,7 @@ async function run() {
       }
     );
     // get user by id by get method (only HR)
-    app.get("/users/:id", logger, verifyToken, verifyHR, async (req, res) => {
+    app.get("/users/:id", verifyToken, verifyHR, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await usersCollection.findOne(query);
@@ -184,23 +191,24 @@ async function run() {
       const email = req.params.email;
       const query = { email: email };
       const result = await usersCollection.findOne(query);
-      res.send({ role: result.role });
+      res.send({ role: result?.role, status: result?.status });
     });
 
     // post new work by post method (Employee only)
-    app.post("/work-sheet", logger, verifyToken, async (req, res) => {
+    app.post("/work-sheet", verifyToken, async (req, res) => {
       const newWork = req.body;
       const result = await worksheetCollection.insertOne(newWork);
       res.send(result);
     });
     // get all worksheets (HR only)
-    app.get("/work-sheet", logger, verifyToken, verifyHR, async (req, res) => {
-      const result = await worksheetCollection.find().toArray();
+    app.get("/work-sheet", verifyToken, verifyHR, async (req, res) => {
+      const query = { status: { $ne: "Fired" } };
+      const result = await worksheetCollection.find(query).toArray();
       res.send(result);
     });
 
     // get specific user works data (Employee Only)
-    app.get("/work-sheet/:email", logger, verifyToken, async (req, res) => {
+    app.get("/work-sheet/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await worksheetCollection
@@ -211,13 +219,20 @@ async function run() {
     });
 
     // get single user payment information (Employee only)
-    app.get("/salary-history/:email", logger, verifyToken, async (req, res) => {
+    app.get("/salary-history/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await paymentsCollection
         .find(query)
         .sort({ _id: -1 })
         .toArray();
+      res.send(result);
+    });
+
+    // post salary payment history by post method (only for HR)
+    app.post("/salary-history", verifyToken, verifyHR, async (req, res) => {
+      const newPayment = req.body;
+      const result = await paymentsCollection.insertOne(newPayment);
       res.send(result);
     });
 
