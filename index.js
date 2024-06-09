@@ -67,6 +67,7 @@ async function run() {
     const usersCollection = await database.collection("Users");
     const worksheetCollection = await database.collection("WorkSheet");
     const paymentsCollection = await database.collection("Payments");
+    const testimonialsCollection = await database.collection("Testimonials");
 
     // verify Admin
     const verifyAdmin = async (req, res, next) => {
@@ -233,6 +234,12 @@ async function run() {
     app.post("/salary-history", verifyToken, verifyHR, async (req, res) => {
       const newPayment = req.body;
       const result = await paymentsCollection.insertOne(newPayment);
+      res.send(result);
+    });
+
+    // get method for fetching testimonials
+    app.get("/testimonials", async (req, res) => {
+      const result = await testimonialsCollection.find().toArray();
       res.send(result);
     });
 
